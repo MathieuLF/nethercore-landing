@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!index.html
+!styles.css
+!app.js
+!robots.txt
+!sitemap.xml
+!assets/
+!assets/**
