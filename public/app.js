@@ -92,9 +92,111 @@
     }
   }
 
+  function initProjectHub() {
+    const projectControls = document.querySelector(".project-controls");
+    const searchInput = document.querySelector("#project-search");
+    const searchClear = document.querySelector("#search-clear");
+    const filterButtons = document.querySelectorAll(".filter-tab");
+    const projectItems = document.querySelectorAll(".utility-link[data-project]");
+    const visibleCounter = document.querySelector(".counter-visible");
+    const totalCounter = document.querySelector(".counter-total");
+    const noResults = document.querySelector("#no-results");
+
+    if (!projectItems.length) {
+      return;
+    }
+
+    if (projectControls) {
+      projectControls.hidden = false;
+    }
+
+    let activeFilter = "all";
+    const totalCount = projectItems.length;
+
+    if (totalCounter) {
+      totalCounter.textContent = String(totalCount).padStart(2, "0");
+    }
+
+    function applyFilter() {
+      const normalizeText = (value) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const query = normalizeText((searchInput?.value || "").trim());
+      let visibleCount = 0;
+
+      projectItems.forEach((item) => {
+        const name = normalizeText(item.dataset.name || item.querySelector(".utility-name")?.textContent || "");
+        const desc = normalizeText(item.querySelector(".utility-desc")?.textContent || "");
+        const status = normalizeText(item.dataset.status || item.dataset.category || "");
+
+        const matchesCategory = activeFilter === "all" || status === activeFilter;
+        const matchesQuery = !query || name.includes(query) || desc.includes(query) || status.includes(query);
+
+        const isVisible = matchesCategory && matchesQuery;
+        item.hidden = !isVisible;
+
+        if (isVisible) {
+          visibleCount++;
+        }
+      });
+
+      if (visibleCounter) {
+        visibleCounter.textContent = String(visibleCount).padStart(2, "0");
+      }
+
+      if (noResults) {
+        noResults.hidden = visibleCount > 0;
+      }
+
+      if (searchClear) {
+        searchClear.hidden = !query;
+      }
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", applyFilter);
+    }
+
+    if (searchClear) {
+      searchClear.addEventListener("click", () => {
+        if (searchInput) {
+          searchInput.value = "";
+          searchInput.focus();
+        }
+        applyFilter();
+      });
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        filterButtons.forEach((item) => {
+          item.classList.remove("active");
+          item.setAttribute("aria-pressed", "false");
+        });
+
+        button.classList.add("active");
+        button.setAttribute("aria-pressed", "true");
+        activeFilter = button.dataset.filter || "all";
+        applyFilter();
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "/" && document.activeElement !== searchInput && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        event.preventDefault();
+        searchInput?.focus();
+      } else if (event.key === "Escape" && document.activeElement === searchInput) {
+        searchInput.value = "";
+        searchInput.blur();
+        applyFilter();
+      }
+    });
+
+    applyFilter();
+  }
+
   syncYear();
   syncMotionPreference();
   syncVisibility();
+  initProjectHub();
 
   window.addEventListener("pointermove", handlePointerMove, { passive: true });
   document.documentElement.addEventListener("pointerleave", resetPointer);
