@@ -96,7 +96,6 @@
     const projectControls = document.querySelector(".project-controls");
     const searchInput = document.querySelector("#project-search");
     const searchClear = document.querySelector("#search-clear");
-    const filterButtons = document.querySelectorAll(".filter-tab");
     const projectItems = document.querySelectorAll(".utility-link[data-project]");
     const visibleCounter = document.querySelector(".counter-visible");
     const totalCounter = document.querySelector(".counter-total");
@@ -110,7 +109,6 @@
       projectControls.hidden = false;
     }
 
-    let activeFilter = "all";
     const totalCount = projectItems.length;
 
     if (totalCounter) {
@@ -125,15 +123,13 @@
       projectItems.forEach((item) => {
         const name = normalizeText(item.dataset.name || item.querySelector(".utility-name")?.textContent || "");
         const desc = normalizeText(item.querySelector(".utility-desc")?.textContent || "");
-        const status = normalizeText(item.dataset.status || item.dataset.category || "");
+        const category = normalizeText(item.dataset.category || "");
+        const status = normalizeText(item.dataset.status || "");
+        const matchesQuery = !query || name.includes(query) || desc.includes(query) || category.includes(query) || status.includes(query);
 
-        const matchesCategory = activeFilter === "all" || status === activeFilter;
-        const matchesQuery = !query || name.includes(query) || desc.includes(query) || status.includes(query);
+        item.hidden = !matchesQuery;
 
-        const isVisible = matchesCategory && matchesQuery;
-        item.hidden = !isVisible;
-
-        if (isVisible) {
+        if (matchesQuery) {
           visibleCount++;
         }
       });
@@ -164,20 +160,6 @@
         applyFilter();
       });
     }
-
-    filterButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        filterButtons.forEach((item) => {
-          item.classList.remove("active");
-          item.setAttribute("aria-pressed", "false");
-        });
-
-        button.classList.add("active");
-        button.setAttribute("aria-pressed", "true");
-        activeFilter = button.dataset.filter || "all";
-        applyFilter();
-      });
-    });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "/" && document.activeElement !== searchInput && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
